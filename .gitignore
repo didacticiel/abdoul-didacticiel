@@ -1,0 +1,11 @@
+# Python
+*.pyc
+__pycache__/
+venv/
+db.sqlite3
+
+# Node
+/frontend/node_modules
+
+# Confidentialité / Sécurité
+.env

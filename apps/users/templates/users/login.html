@@ -1,0 +1,103 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<main class="relative min-h-screen flex items-center justify-center bg-[#050505] py-20 px-4">
+    
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px]"></div>
+    </div>
+
+    <div class="max-w-md w-full z-10">
+        <div class="bg-white/[0.03] backdrop-blur-xl border border-white/5 p-10 rounded-[3rem] shadow-3xl">
+            <div class="text-center mb-10">
+                <div class="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-primary/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-black text-white tracking-tighter">Content de vous revoir</h2>
+                <p class="text-gray-500 text-sm mt-2">Accédez à votre espace sécurisé</p>
+            </div>
+
+            <form class="space-y-6" method="POST">
+                {% csrf_token %}
+                
+                <div class="form-control">
+                    <input type="email" name="username" required 
+                           class="input input-bordered h-14 bg-white/5 border-white/10 rounded-2xl focus:border-primary text-white" 
+                           placeholder="Email">
+                </div>
+
+                <div class="form-control">
+                    <input type="password" name="password" required 
+                           class="input input-bordered h-14 bg-white/5 border-white/10 rounded-2xl focus:border-primary text-white" 
+                           placeholder="Mot de passe">
+                    <label class="label justify-end">
+                        <a href="#" class="label-text-alt text-primary/60 hover:text-primary transition-colors">Mot de passe oublié ?</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full h-14 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] transition-all">
+                    Se connecter
+                </button>
+            </form>
+
+            <div class="relative my-10">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-white/5"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-transparent px-4 text-gray-500 font-bold tracking-[0.3em]">Ou</span></div>
+            </div>
+
+            <div class="flex justify-center mb-8">
+                <div id="googleBtnContainer" class="w-full"></div>
+            </div>
+
+            <p class="text-center text-sm text-gray-500 font-medium">
+                Nouveau ici ? 
+                <a href="{% url 'users:register' %}" class="text-white hover:text-primary underline underline-offset-4 ml-1 transition-colors">Créer un compte gratuitement</a>
+            </p>
+        </div>
+    </div>
+</main>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+    // 1. Définition de la fonction de callback (Indispensable !)
+    function handleCredentialResponse(response) {
+        fetch("{% url 'users_api:google_auth' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ id_token: response.credential })
+        })
+        .then(res => res.json())
+        .then(data => { 
+            if (data.access) {
+                window.location.href = "/"; 
+            } else {
+                alert("Erreur de connexion Google");
+            }
+        })
+        .catch(err => console.error("Erreur réseau:", err));
+    }
+
+    // 2. Initialisation au chargement de la fenêtre
+    window.onload = function () {
+        google.accounts.id.initialize({ 
+            client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}", 
+            callback: handleCredentialResponse 
+        });
+        
+        google.accounts.id.renderButton(
+            document.getElementById("googleBtnContainer"), 
+            { 
+                theme: "filled_black", // "filled_black" pour plus de visibilité
+                size: "large", 
+                width: "100%", // Utilise 100% pour remplir le container
+                shape: "circle" 
+            }
+        );
+    };
+</script>
+{% endblock %}

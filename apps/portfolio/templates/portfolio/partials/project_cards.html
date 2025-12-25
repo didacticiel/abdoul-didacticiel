@@ -1,0 +1,95 @@
+{# ═══════════════════════════════════════════════════════════════ #}
+{# apps/portfolio/templates/portfolio/partials/project_cards.html #}
+{# PARTIAL pour pagination infinie (Load More) #}
+{# ═══════════════════════════════════════════════════════════════ #}
+{#
+DIFFÉRENCE avec project_grid.html :
+- project_grid.html : contient la DIV wrapper avec grid
+- project_cards.html : contient SEULEMENT les cards (sans wrapper)
+- Utilisé pour hx-swap="beforeend" (ajoute à la fin)
+#}
+
+{% load static %}
+
+{% for project in projects %}
+<article class="group cursor-pointer animate-fade-in-up">
+    {# ... même code que dans project_grid.html ... #}
+    {# (pour économiser l'espace, je ne répète pas le code) #}
+</article>
+{% endfor %}
+
+{# Si il y a encore des pages, recharge le bouton Load More #}
+{% if page_obj.has_next %}
+<div class="col-span-3 text-center mt-8" hx-swap-oob="true" id="load-more-container">
+    <button 
+        hx-get="{% url 'portfolio:load_more' %}?page={{ page_obj.next_page_number }}"
+        hx-target="#projects-grid"
+        hx-swap="beforeend"
+        class="btn btn-lg btn-outline">
+        Charger plus
+    </button>
+</div>
+{% else %}
+{# Plus de projets, supprime le bouton #}
+<div hx-swap-oob="delete" id="load-more-container"></div>
+{% endif %}
+
+
+{# ═══════════════════════════════════════════════════════════════ #}
+{# CSS Personnalisé pour les animations #}
+{# À ajouter dans base.html ou un fichier CSS séparé #}
+{# ═══════════════════════════════════════════════════════════════ #}
+<style>
+/* 
+HTMX INDICATOR :
+Affiche un loader pendant les requêtes HTMX.
+HTMX ajoute automatiquement les classes .htmx-request pendant les requêtes.
+*/
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+
+.htmx-request.htmx-indicator {
+    display: inline-block;
+}
+
+/*
+ANIMATION FADE IN UP :
+Utilisée pour l'apparition progressive des cards.
+*/
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+/*
+FILTRES BUTTONS STYLING :
+États actifs et hover pour les boutons de filtre.
+*/
+.filter-btn {
+    @apply px-6 py-2 rounded-full border-2 border-base-300 font-bold text-sm uppercase tracking-wider transition-all duration-300;
+}
+
+.filter-btn.active {
+    @apply border-primary bg-primary text-white scale-105 shadow-lg shadow-primary/30;
+}
+
+.filter-btn:hover:not(.active) {
+    @apply border-primary/50 bg-primary/5 scale-102;
+}
+</style>

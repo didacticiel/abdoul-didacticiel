@@ -1,0 +1,182 @@
+
+
+<!-- 
+  {# ═══════════════════════════════════════════════════════════════ #}
+{# apps/portfolio/templates/portfolio/portfolio_list.html #}
+{# TEMPLATE PRINCIPAL - Page liste complète #}
+{# ═══════════════════════════════════════════════════════════════ #}
+{#
+LOGIQUE DU TEMPLATE :
+- Extend base.html pour hériter navbar/footer
+- Affiche les filtres (catégories, recherche)
+- Affiche la grille de projets
+- Utilise HTMX pour filtrage dynamique SANS rechargement de page
+
+HTMX ATTRIBUTES :
+- hx-get : URL à appeler en GET
+- hx-target : élément à remplacer (#projects-grid)
+- hx-swap : comment remplacer (innerHTML, outerHTML, beforeend, etc.)
+- hx-push-url : met à jour l'URL du navigateur
+- hx-indicator : affiche un loader pendant la requête
+#}
+   -->
+
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Portfolio - Abdoul Didacticiel{% endblock %}
+
+{% block content %}
+<!-- 
+ {# ═══════════════════════════════════════════════════════════════
+   SECTION HERO
+   ═══════════════════════════════════════════════════════════════ #}
+   -->
+
+<section class="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-base-100 via-primary/5 to-base-100">
+    
+    {# Background effects #}
+    <div class="absolute inset-0 z-0 pointer-events-none">
+        <div class="absolute inset-0 bg-[linear-gradient(rgba(139,92,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.03)_1px,transparent_1px)] bg-[size:80px_80px] opacity-50"></div>
+        <div class="absolute top-20 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
+    </div>
+
+    <div class="container mx-auto px-4 z-10 text-center relative pt-24">
+        
+        {# Breadcrumb #}
+        <nav class="flex justify-center items-center gap-2 text-sm mb-8 opacity-60">
+            <a href="{% url 'core:home' %}" class="hover:text-primary transition-colors">Accueil</a>
+            <span>/</span>
+            <span class="text-primary font-semibold">Portfolio</span>
+        </nav>
+
+        {# Titre #}
+        <h1 class="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-none">
+            <span class="block text-base-content">Mes</span>
+            <span class="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-400 to-primary">
+                Réalisations
+            </span>
+        </h1>
+
+        <p class="text-lg md:text-xl text-base-content/70 max-w-3xl mx-auto mb-12 leading-relaxed">
+            {{ total_projects }} projets innovants combinant développement, IA et cybersécurité
+        </p>
+
+        {# Stats #}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mt-16">
+            <div class="bg-base-200/50 backdrop-blur-sm border border-base-300 rounded-2xl p-6">
+                <div class="text-4xl font-black text-primary mb-2">{{ total_projects }}</div>
+                <div class="text-xs uppercase tracking-wider text-base-content/60">Projets</div>
+            </div>
+            <div class="bg-base-200/50 backdrop-blur-sm border border-base-300 rounded-2xl p-6">
+                <div class="text-4xl font-black text-emerald-500 mb-2">{{ categories.count }}</div>
+                <div class="text-xs uppercase tracking-wider text-base-content/60">Catégories</div>
+            </div>
+            <div class="bg-base-200/50 backdrop-blur-sm border border-base-300 rounded-2xl p-6">
+                <div class="text-4xl font-black text-blue-500 mb-2">{{ technologies.count }}</div>
+                <div class="text-xs uppercase tracking-wider text-base-content/60">Technologies</div>
+            </div>
+            <div class="bg-base-200/50 backdrop-blur-sm border border-base-300 rounded-2xl p-6">
+                <div class="text-4xl font-black text-purple-500 mb-2">100%</div>
+                <div class="text-xs uppercase tracking-wider text-base-content/60">Réussite</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+   <!-- 
+   ═══════════════════════════════════════════════════════════════
+   SECTION FILTRES STICKY
+   ═══════════════════════════════════════════════════════════════
+   HTMX LOGIQUE :
+   - Chaque bouton de filtre appelle l'API Django avec hx-get
+   - hx-target="#projects-grid" : remplace le contenu de la grille
+   - hx-push-url="true" : met à jour l'URL du navigateur (pour partage)
+   - hx-indicator=".htmx-indicator" : affiche un loader
+   -->
+<section class="py-16 bg-base-100 sticky top-0 z-40 backdrop-blur-md border-b border-base-300">
+    <div class="container mx-auto px-4">
+        
+        {# Header avec compteur dynamique #}
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
+            <div>
+                <h2 class="text-3xl font-black text-base-content mb-2">Explorez par catégorie</h2>
+                <p class="text-sm text-base-content/60">Filtrez les projets selon vos intérêts</p>
+            </div>
+            
+            {# COMPTEUR DYNAMIQUE avec HTMX #}
+            <div id="project-counter" class="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
+                <span class="text-2xl font-black text-primary">{{ total_projects }}</span>
+                <span class="text-xs text-base-content/60 uppercase tracking-wider">Projets</span>
+            </div>
+        </div>
+
+        {# BOUTONS DE FILTRES HTMX #}
+        <div class="flex flex-wrap justify-center gap-3">
+            {# Bouton "Tous" #}
+            <button 
+                hx-get="{% url 'portfolio:filter_projects' %}?category=all"
+                hx-target="#projects-grid"
+                hx-swap="innerHTML"
+                hx-push-url="true"
+                hx-indicator=".htmx-indicator"
+                class="filter-btn {% if active_category == 'all' %}active{% endif %}">
+                🎯 Tous les projets
+            </button>
+
+            {# Boucle sur les catégories #}
+            {% for category in categories %}
+            <button 
+                hx-get="{% url 'portfolio:filter_projects' %}?category={{ category.slug }}"
+                hx-target="#projects-grid"
+                hx-swap="innerHTML"
+                hx-push-url="true"
+                hx-indicator=".htmx-indicator"
+                class="filter-btn {% if active_category == category.slug %}active{% endif %}">
+                {{ category.icon }} {{ category.name }}
+            </button>
+            {% endfor %}
+        </div>
+
+        {# LOADER HTMX (affiché pendant les requêtes) #}
+        <div class="htmx-indicator hidden text-center mt-6">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+    </div>
+</section>
+
+
+   <!--  ═══════════════════════════════════════════════════════════════
+   GRILLE DE PROJETS
+   ID="projects-grid" : CIBLE HTMX pour le remplacement
+   ═══════════════════════════════════════════════════════════════  -->
+<section class="py-20 bg-base-100">
+    <div class="container mx-auto px-4">
+        
+        {# Inclusion du partial de grille #}
+        <div id="projects-grid">
+            {% include 'portfolio/partials/project_grid.html' %}
+        </div>
+
+        {# BOUTON "LOAD MORE" AVEC HTMX (pagination infinie) #}
+        {% if page_obj.has_next %}
+        <div class="text-center mt-16" id="load-more-container">
+            <button 
+                hx-get="{% url 'portfolio:load_more' %}?page={{ page_obj.next_page_number }}&category={{ active_category }}"
+                hx-target="#projects-grid"
+                hx-swap="beforeend"
+                hx-indicator=".load-more-spinner"
+                class="btn btn-lg btn-outline border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-full px-12 font-bold uppercase tracking-wider transition-all">
+                Charger plus de projets
+                <span class="load-more-spinner htmx-indicator hidden">
+                    <span class="loading loading-spinner loading-sm"></span>
+                </span>
+            </button>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,126 @@
+# docker-compose.prod.yml
+networks:
+  traefik-public:
+    external: true
+  internal:
+    external: true
+
+# Variables d’environnement communes à tous les microservices
+x-common-microservice: &common-microservice
+  env_file:
+    - .env.prod
+  deploy:
+    labels:
+      - traefik.enable=false
+  networks:
+    - internal
+
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - "--api=true"                           # Active l'API (obligatoire pour dashboard v3)
+      - "--api.dashboard=true"                 # Dashboard moderne
+      - "--providers.swarm=true"               # ← NOUVEAU : Provider Swarm séparé (remplace docker.swarmMode)
+      - "--providers.swarm.exposedByDefault=false"  # Ignore les services sans traefik.enable=true
+      - "--providers.swarm.network=traefik-public"  # Réseau pour discovery
+      - "--entrypoints.web.address=:80"
+      - "--metrics=true"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entrypoint=web"
+      - "--tracing=true"
+      - "--tracing.otlp=true"
+      - "--tracing.otlp.http.endpoint=http://jaeger:4318/v1/traces"
+      - "--log.level=INFO"
+      - "--accesslog=true"                     # Bonus : logs des requêtes visibles dans dashboard
+    ports:
+      - target: 80
+        published: 80
+        mode: host
+      - target: 8080
+        published: 8080
+        mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dashboard.rule=PathPrefix(`/dashboard`) || PathPrefix(`/api`)"  # Accès au dashboard et API
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.entrypoints=web"
+        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+    networks:
+      - traefik-public
+
+  gateway-service:
+    <<: *common-microservice
+    image: ${DOCKERHUB_USERNAME}/cloudtaskhub-gateway:latest
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        # - "traefik.http.routers.gateway.rule=HostRegexp(`{host:.+}`)"
+        - "traefik.http.routers.gateway.rule=PathPrefix(`/`)"
+        - "traefik.http.routers.gateway.entrypoints=web"
+        - "traefik.http.services.gateway.loadbalancer.server.port=8000"
+    networks:
+      - traefik-public
+      - internal
+
+  auth-service:
+    <<: *common-microservice
+    image: ${DOCKERHUB_USERNAME}/cloudtaskhub-auth:latest
+    deploy:
+      replicas: 2
+
+  project-service:
+    <<: *common-microservice
+    image: ${DOCKERHUB_USERNAME}/cloudtaskhub-project:latest
+    deploy:
+      replicas: 1
+
+  billing-service:
+    <<: *common-microservice
+    image: ${DOCKERHUB_USERNAME}/cloudtaskhub-billing:latest
+    deploy:
+      replicas: 1
+
+  notification-service:
+    <<: *common-microservice
+    image: ${DOCKERHUB_USERNAME}/cloudtaskhub-notification:latest
+    deploy:
+      replicas: 1
+
+  analytics-service:
+    <<: *common-microservice
+    image: ${DOCKERHUB_USERNAME}/cloudtaskhub-analytics:latest
+    deploy:
+      replicas: 1
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    ports:
+      - "16686:16686"
+      - "4317:4317" # protocal GRPC htttp/2
+      - "4318:4318" # protocal HTTP http/1
+    deploy:
+      labels: [traefik.enable=false]
+    networks: [internal]
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports: ["9090:9090"]
+    deploy:
+      labels: [traefik.enable=false]
+    networks: [internal]
+
+  grafana:
+    image: grafana/grafana:latest
+    ports: ["3000:3000"]
+    deploy:
+      labels: [traefik.enable=false]
+    networks: [internal]
