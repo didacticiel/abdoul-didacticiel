@@ -2,7 +2,6 @@
 
 {% block content %}
 <main class="relative min-h-screen flex items-center justify-center bg-[#050505] py-20 px-4">
-    
     <div class="absolute inset-0 overflow-hidden">
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px]"></div>
     </div>
@@ -19,21 +18,17 @@
                 <p class="text-gray-500 text-sm mt-2">Accédez à votre espace sécurisé</p>
             </div>
 
-            
+            <div class="flex justify-center mb-4">
+                <div id="googleBtnContainer" class="w-full min-h-[44px]"></div>
+            </div>
 
-            <div class="relative my-10">
+            <div class="relative flex justify-center text-xs uppercase mb-6 mt-6">
+                <span class="bg-transparent px-4 text-gray-500 font-bold tracking-[0.3em] z-10">Ou</span>
                 <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-white/5"></div></div>
             </div>
 
-            <div class="flex justify-center mb-3">
-                <div id="googleBtnContainer" class="w-full"></div>
-            </div>
-
-             <div class="relative flex justify-center text-xs uppercase mb-6 mt-2"><span class="bg-transparent px-4 text-gray-500 font-bold tracking-[0.3em]">Ou</span></div>
-
             <form class="space-y-6" method="POST">
                 {% csrf_token %}
-                
                 <div class="form-control">
                     <input type="email" name="username" required 
                            class="input input-bordered h-14 bg-white/5 border-white/10 rounded-2xl focus:border-primary text-white" 
@@ -54,10 +49,9 @@
                 </button>
             </form>
 
-
-            <p class="text-center text-sm text-gray-500 font-medium">
+            <p class="text-center text-sm text-gray-500 font-medium mt-8">
                 Nouveau ici ? 
-                <a href="{% url 'users:register' %}" class="text-white hover:text-primary underline underline-offset-4 ml-1 transition-colors">Créer un compte gratuitement</a>
+                <a href="{% url 'users:register' %}" class="text-white hover:text-primary underline underline-offset-4 ml-1 transition-colors">Créer un compte</a>
             </p>
         </div>
     </div>
@@ -65,7 +59,6 @@
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-    // 1. Définition de la fonction de callback (Indispensable !)
     function handleCredentialResponse(response) {
         fetch("{% url 'users_api:google_auth' %}", {
             method: 'POST',
@@ -77,31 +70,24 @@
         })
         .then(res => res.json())
         .then(data => { 
-            if (data.access) {
-                window.location.href = "/"; 
-            } else {
-                alert("Erreur de connexion Google");
-            }
+            if (data.access) window.location.href = "/"; 
+            else alert("Erreur de connexion Google");
         })
         .catch(err => console.error("Erreur réseau:", err));
     }
 
-    // 2. Initialisation au chargement de la fenêtre
-    window.onload = function () {
-        google.accounts.id.initialize({ 
-            client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}", 
-            callback: handleCredentialResponse 
-        });
-        
-        google.accounts.id.renderButton(
-            document.getElementById("googleBtnContainer"), 
-            { 
-                theme: "filled_black", // "filled_black" pour plus de visibilité
-                size: "large", 
-                width: "100%", // Utilise 100% pour remplir le container
-                shape: "circle" 
-            }
-        );
-    };
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof google !== 'undefined') {
+            google.accounts.id.initialize({ 
+                client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}", 
+                callback: handleCredentialResponse,
+                ux_mode: "popup"
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("googleBtnContainer"), 
+                { theme: "filled_black", size: "large", width: "100%", shape: "pill" }
+            );
+        }
+    });
 </script>
 {% endblock %}
