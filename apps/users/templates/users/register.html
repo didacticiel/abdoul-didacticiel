@@ -21,6 +21,14 @@
             
             <form class="space-y-5" method="POST">
                 {% csrf_token %}
+
+                
+                <div class="divider before:bg-white/10 after:bg-white/10 text-[10px] text-gray-500 uppercase font-black tracking-widest"> s'inscrire avec Google</div>
+                <div class="flex justify-center">
+                    <div id="googleBtnContainer" class="w-full"></div>
+                </div>
+
+                <div class="divider before:bg-white/10 after:bg-white/10 text-[10px] text-gray-500 uppercase font-black tracking-widest">Ou s'inscrire avec</div>
                 
                 <div class="form-control group/input">
                     <label class="label opacity-60 text-[10px] uppercase tracking-widest font-bold">Email</label>
@@ -53,11 +61,7 @@
                     Créer mon compte
                 </button>
                 
-                <div class="divider before:bg-white/10 after:bg-white/10 text-[10px] text-gray-500 uppercase font-black tracking-widest">Ou s'inscrire avec</div>
-
-                <div class="flex justify-center">
-                    <div id="googleBtnContainer" class="w-full"></div>
-                </div>
+                
             </form>
 
             <div class="text-center mt-8">
