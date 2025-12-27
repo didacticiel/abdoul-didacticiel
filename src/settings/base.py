@@ -43,7 +43,6 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-# ... (inchangé)
     # API & JWT
     'rest_framework',
     'rest_framework_simplejwt',
@@ -63,6 +62,8 @@ THIRD_PARTY_APPS = [
     # Authentification (Nous gardons le minimum pour l'email, mais retirons dj_rest_auth/allauth car nous utilisons JWT)
     'allauth',
     'allauth.account', 
+    'allauth.socialaccount',             # <--- AJOUTER CETTE LIGNE
+    'allauth.socialaccount.providers.google', # <--- AJOUTER CETTE LIGNE
     
     # Retrait de dj_rest_auth/dj_rest_auth.registration, rosetta, drf_spectacular (pour l'instant)
 ]
@@ -85,7 +86,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # =========================================================================
 
 MIDDLEWARE = [
-# ... (inchangé)
+
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  
     
@@ -345,6 +346,23 @@ CKEDITOR_CONFIGS = {
 GOOGLE_OAUTH_CLIENT_ID = env('GOOGLE_OAUTH_CLIENT_ID', default='')
 GOOGLE_OAUTH_CLIENT_SECRET = env('GOOGLE_OAUTH_CLIENT_SECRET', default='')
 
+# =========================================================================
+# 10. AUTHENTIFICATION SOCIALE (GOOGLE)
+# =========================================================================
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+
+# Important : Allauth utilise l'ID du site pour lier les comptes sociaux
+SITE_ID = 1
 
 #  CORRECTION: Ajout pour résoudre models.W042
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
