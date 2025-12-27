@@ -40,7 +40,12 @@ COPY . .
 # Sécurité : Création d'un utilisateur non-root
 RUN useradd -m appuser && chown -R appuser /app
 USER appuser
+# Donne les droits d'exécution au script
+USER root
+RUN chmod +x /app/build.sh
+USER appuser
 
 EXPOSE 8000
 
-CMD ["gunicorn", "src.wsgi:application", "--bind", "0.0.0.0:8000"]
+#CMD ["gunicorn", "src.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["/app/build.sh"]

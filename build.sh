@@ -1,3 +1,4 @@
+# abdoul-didacticiel/build.sh
 #!/usr/bin/env bash
 # exit on error
 set -o errexit
@@ -14,3 +15,7 @@ python manage.py collectstatic --no-input --settings=src.settings.production
 
 # 4. Mise à jour de la base de données PostgreSQL
 python manage.py migrate --settings=src.settings.production
+
+# 5. DÉMARRAGE DU SERVEUR (Indispensable !)
+echo "Démarrage de Gunicorn..."
+exec gunicorn src.wsgi:application --bind 0.0.0.0:8000
