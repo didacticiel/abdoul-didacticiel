@@ -1,4 +1,4 @@
-# docker-compose.tests.yml
+# abdoul-didacticiel/docker-compose.tests.yml
 # =============================================================
 # Stack de test ULTRA-LÉGER pour GitHub Actions
 # → Plus de Kafka → plus jamais d’erreur de version/image

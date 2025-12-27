@@ -1,0 +1,2 @@
+Option 2 : Utiliser un autre service gratuit (Aiven ou Supabase) Si tu veux une base de données PostgreSQL qui reste gratuite à vie (avec des limites de taille), 
+tu peux créer ta base sur Supabase ou Aiven, et copier leur URL de connexion dans la variable DATABASE_URL sur Render.

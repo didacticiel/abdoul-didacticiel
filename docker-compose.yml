@@ -1,188 +1,82 @@
 # =============================================================
-# Stack PRODUCTION – MODE SANS DOMAINE POUR TESTS LOCAUX
-# → HTTP seulement (pas de HTTPS)
-# → À activer plus tard : Let's Encrypt + HTTPS
+# Stack abdoul-didacticiel – MODE HYBRIDE (Local/Prod)
 # =============================================================
 
 networks:
   traefik-public:
     external: true
   internal:
-    driver: overlay
-    attachable: true
+    driver: bridge # On utilise bridge pour le dev simple sur WSL
 
 services:
 
   # ========================================
-  # TRAEFIK – Reverse proxy (mode HTTP)
+  # TRAEFIK – Reverse proxy
   # ========================================
   traefik:
     image: traefik:v3.6
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedByDefault=false"
-
-      # ================================
-      # 🔥 ENTRYPOINTS EN MODE SANS HTTPS
-      # ================================
       - "--entrypoints.web.address=:80"
-
-      # ==========================================================
-      # ❌ À DÉSACTIVER TANT QUE TU N’AS PAS DE DOMAINE
-      #    Supprimer HTTPS & redirection pour éviter les erreurs
-      # ==========================================================
-      # - "--entrypoints.websecure.address=:443"
-      # - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      # - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-
-      # ====================================================================
-      # ❌ DÉSACTIVER LET'S ENCRYPT POUR LE MOMENT
-      #    (NE FONCTIONNE PAS SANS NOM DE DOMAINE)
-      # ====================================================================
-      # - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
-      # - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
-      # - "--certificatesresolvers.myresolver.acme.email=donaldtedom0@gmail.com"
-      # - "--certificatesresolvers.myresolver.acme.storage=/acme.json"
-
       - "--api.dashboard=true"
       - "--log.level=INFO"
-
     ports:
       - target: 80
         published: 80
         mode: host
-
-      # ==========================================================
-      # ❌ INUTILE POUR L'INSTANT (HTTPS désactivé)
-      # ==========================================================
-      # - target: 443
-      #   published: 443
-      #   mode: host
-
-      # Dashboard Traefik (toujours en clear HTTP)
       - target: 8080
         published: 8080
         mode: host
-
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-
-      # ====================================================================
-      # ❌ LET’S ENCRYPT DÉSACTIVÉ → pas besoin de monter le fichier acme.json
-      # ====================================================================
-      # - /var/data/traefik/acme.json:/acme.json
-
     deploy:
-      placement:
-        constraints:
-          - node.role == manager
       labels:
         - "traefik.enable=true"
-
-        # Dashboard en HTTP simple (pas de HTTPS)
-        - "traefik.http.routers.dashboard.rule=HostRegexp(`{host:.+}`) && PathPrefix(`/dashboard`)"
+        - "traefik.http.routers.dashboard.rule=PathPrefix(`/dashboard`)"
         - "traefik.http.routers.dashboard.service=api@internal"
         - "traefik.http.routers.dashboard.entrypoints=web"
-
-        # ==========================================================
-        # ❌ ENLEVER LE CERTRESOLVER
-        # ==========================================================
-        # - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
-
     networks:
       - traefik-public
 
   # ========================================
-  # GATEWAY SERVICE (mode HTTP)
+  # DJANGO APP (Ton Monolithe)
   # ========================================
-  gateway-service:
-    image: donald284/cloudtaskhub-gateway:latest
+  web:
+    build: .
+    image: ${DOCKERHUB_USERNAME:-abdoul}/abdoul-didacticiel:latest
+    env_file:
+      - .env
     environment:
-      - KAFKA_ENABLED=false
-      - TEST_MODE=false
-    deploy:
-      replicas: 3
-      update_config:
-        parallelism: 1
-        delay: 10s
-      labels:
-        - "traefik.enable=true"
-
-        # ==========================================================
-        # 🔥 ROUTE EN HTTP SEULEMENT
-        # ==========================================================
-        - "traefik.http.routers.gateway.rule=HostRegexp(`{host:.+}`)"
-        - "traefik.http.routers.gateway.entrypoints=web"
-
-        # ==========================================================
-        # ❌ PAS DE HTTPS → PAS DE CERTRESOLVER
-        # ==========================================================
-        # - "traefik.http.routers.gateway.tls.certresolver=myresolver"
-
-        - "traefik.http.services.gateway.loadbalancer.server.port=8000"
-
+      - DATABASE_URL=postgres://admin:pass@db:5432/didacticiel_db
+    depends_on:
+      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=HostRegexp(`{host:.+}`)"
+      - "traefik.http.routers.web.entrypoints=web"
+      - "traefik.http.services.web.loadbalancer.server.port=8000"
     networks:
       - traefik-public
       - internal
 
   # ========================================
-  # MICRO-SERVICES INTERNES
+  # BASE DE DONNÉES (Indispensable en local)
   # ========================================
-  auth-service:
-    image: donald284/cloudtaskhub-auth:latest
+  db:
+    image: postgres:15-alpine
     environment:
-      - KAFKA_ENABLED=false
-    deploy:
-      replicas: 2
-    networks:
-      - internal
-
-  project-service:
-    image: donald284/cloudtaskhub-project:latest
-    environment:
-      - KAFKA_ENABLED=false
-    deploy:
-      replicas: 2
-    networks:
-      - internal
-
-  billing-service:
-    image: donald284/cloudtaskhub-billing:latest
-    environment:
-      - KAFKA_ENABLED=false
-    deploy:
-      replicas: 2
-    networks:
-      - internal
-
-  notification-service:
-    image: donald284/cloudtaskhub-notification:latest
-    environment:
-      - KAFKA_ENABLED=false
-    deploy:
-      replicas: 2
-    networks:
-      - internal
-
-  analytics-service:
-    image: donald284/cloudtaskhub-analytics:latest
-    environment:
-      - KAFKA_ENABLED=false
-    deploy:
-      replicas: 2
+      - POSTGRES_DB=didacticiel_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - internal
 
   # ========================================
-  # OBSERVABILITÉ
+  # OBSERVABILITÉ (On garde tes outils !)
   # ========================================
-  jaeger:
-    image: jaegertracing/all-in-one:1.58
-    ports:
-      - "16686:16686"
-    networks:
-      - internal
-
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -198,3 +92,6 @@ services:
       - "3000:3000"
     networks:
       - internal
+
+volumes:
+  postgres_data:

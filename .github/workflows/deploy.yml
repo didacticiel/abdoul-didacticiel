@@ -1,3 +1,4 @@
+# .github/workflows/deploy.yml
 # LOGIQUE CI/CD : Ce fichier définit un pipeline en deux temps.
 # 1. CI (Intégration Continue) : On teste si le code est sain.
 # 2. CD (Déploiement Continu) : On envoie le code validé vers Render.
@@ -19,6 +20,9 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4 # Étape 1 : GitHub télécharge ton code
+      # Nouvelle étape : Vérifier que l'image Docker se construit sans erreur
+      - name: Vérifier le Build Docker
+        run: docker build . -t abdoul-test:latest
       - uses: actions/setup-python@v5 # Étape 2 : GitHub installe Python 3.13
         with:
           python-version: '3.13'

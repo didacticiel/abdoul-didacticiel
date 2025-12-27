@@ -38,8 +38,10 @@ JWT_COOKIE_SAMESITE = "None"
 # Indique à Django que le proxy (Nginx/Render/Heroku) utilise HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+
 # Redirige tout le trafic HTTP vers HTTPS
-SECURE_SSL_REDIRECT = True 
+# Laisse Render gérer la redirection HTTP vers HTTPS pour le moment
+SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=False)
 
 # HSTS (HTTP Strict Transport Security)
 SECURE_HSTS_SECONDS = 31536000        # 1 an

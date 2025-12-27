@@ -136,17 +136,16 @@ WSGI_APPLICATION = 'src.wsgi.application'
 # =========================================================================
 # 5. BASE DE DONNÉES (Configuration avec repli sécurisé)
 # =========================================================================
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': env('DATABASE_ENGINE', default='django.db.backends.sqlite3'),
-        'NAME': env('DATABASE_NAME', default=str(BASE_DIR / 'db.sqlite3')),
-        'USER': env('DATABASE_USER', default=''),
-        'PASSWORD': env('DATABASE_PASSWORD', default=''),
-        'HOST': env('DATABASE_HOST', default='localhost'), 
-        'PORT': env.int('DATABASE_PORT', default=5432),
-        'ATOMIC_REQUESTS': True,
-        'CONN_MAX_AGE': 60,
-    }
+    'default': dj_database_url.config(
+        # Si DATABASE_URL est présent (Render/Docker), il l'utilise
+        # Sinon, il se replie sur un SQLite local pour ne pas planter
+        default=env('DATABASE_URL', default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+        conn_max_age=600,
+        ssl_require=not DEBUG # Force le SSL seulement en production
+    )
 }
 
 # Modèle Utilisateur Personnalisé
