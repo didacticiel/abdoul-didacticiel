@@ -25,3 +25,4 @@ fi
 # 6. Démarrage
 echo "Démarrage de Gunicorn..."
 exec gunicorn src.wsgi:application --bind 0.0.0.0:8000
+#fin
