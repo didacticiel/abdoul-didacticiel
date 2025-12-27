@@ -21,7 +21,7 @@ APPS_DIR = BASE_DIR / "apps"
 # Quick-start development settings - unsuitable for production
 
 # Récupération des variables d'environnement
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-dummy-key-for-ci')
 DEBUG = env.bool('DEBUG', default=False)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
@@ -132,25 +132,20 @@ TEMPLATES = [
 WSGI_APPLICATION = 'src.wsgi.application'
 
 
-# =========================================================================
-# 5. BASE DE DONNÉES & UTILISATEURS
-# =========================================================================
 
+# =========================================================================
+# 5. BASE DE DONNÉES (Configuration avec repli sécurisé)
+# =========================================================================
 DATABASES = {
-# ... (inchangé)
-    # 💡 C'est cette structure qui est CRUCIALE. Django cherche 'ENGINE'.
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DATABASE_NAME'),
-        'USER': env('DATABASE_USER'),
-        'PASSWORD': env('DATABASE_PASSWORD'),
+        'ENGINE': env('DATABASE_ENGINE', default='django.db.backends.sqlite3'),
+        'NAME': env('DATABASE_NAME', default=str(BASE_DIR / 'db.sqlite3')),
+        'USER': env('DATABASE_USER', default=''),
+        'PASSWORD': env('DATABASE_PASSWORD', default=''),
         'HOST': env('DATABASE_HOST', default='localhost'), 
         'PORT': env.int('DATABASE_PORT', default=5432),
         'ATOMIC_REQUESTS': True,
         'CONN_MAX_AGE': 60,
-        'OPTIONS': {
-            'connect_timeout': 5,
-        },
     }
 }
 
