@@ -8,3 +8,4 @@ python manage.py migrate --settings=src.settings.production
 
 echo "Démarrage de Gunicorn..."
 exec gunicorn src.wsgi:application --bind 0.0.0.0:8000
+# fin
