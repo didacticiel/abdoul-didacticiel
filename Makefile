@@ -1,125 +1,73 @@
 # ===========================================================
-# GLOBAL VARIABLES
+# VARIABLES GLOBALES
 # ===========================================================
-SERVICES = gateway auth project billing notification analytics
-DOCKER_NAMESPACE ?= cloudtaskhub
-DOCKER_USERNAME ?= $(shell echo $$DOCKERHUB_USERNAME)
-TAG ?= latest
+# Nom de ton application (utilisé pour les images docker si besoin)
+APP_NAME = abdoul-didacticiel
+PYTHON = python3
+MANAGE = $(PYTHON) manage.py
+# On détecte si on est sur Render ou en local
+SETTINGS_DEV = src.settings.development
+SETTINGS_TEST = src.settings.testing
+SETTINGS_PROD = src.settings.production
 
-COMPOSE = docker compose
-STACK = docker stack deploy -c docker-compose.yml cloudtaskhub
+.PHONY: help install migrate test run ci static clean
 
-.PHONY: help
 help:
 	@echo ""
-	@echo "📘 CloudTaskHub Makefile — Version Professionnelle"
+	@echo "📘 Abdoul Didacticiel Makefile — Mode Production Ready"
 	@echo ""
-	@echo "Usage : make <command>"
+	@echo "COMMANDES LOCALES :"
+	@echo "  make install      → Installe les dépendances"
+	@echo "  make migrate      → Applique les migrations (Dev)"
+	@echo "  make run          → Lance le serveur de développement"
+	@echo "  make static       → Collecte les fichiers statiques"
 	@echo ""
-	@echo "COMMANDES PRINCIPALES :"
-	@echo "  make build              → Build docker images (all services)"
-	@echo "  make build SERVICE=x    → Build a single service"
-	@echo "  make push               → Push images to Docker Hub"
-	@echo "  make test               → Run unit tests"
-	@echo "  make integration        → Run integration tests with compose"
-	@echo "  make deploy             → Deploy stack on Swarm"
-	@echo "  make logs               → Show logs of all services"
-	@echo "  make rollback TAG=x     → Rollback to a previous tag"
-	@echo "  make scan               → Security scan (Trivy)"
-	@echo "  make clean              → Cleanup"
+	@echo "COMMANDES CI/CD & QUALITÉ :"
+	@echo "  make test         → Lance les tests unitaires (via Testing Settings)"
+	@echo "  make ci           → Pipeline complet (Install + Test)"
+	@echo "  make lint         → Vérifie la qualité du code (Flake8)"
 	@echo ""
 
+# ===========================================================
+# INSTALLATION & SETUP
+# ===========================================================
+install:
+	@echo "📦 Installation des dépendances..."
+	pip install -r requirements.txt
+
+migrate:
+	@echo "🗄️ Application des migrations..."
+	$(MANAGE) migrate --settings=$(SETTINGS_DEV)
+
+static:
+	@echo "🎨 Collecte des fichiers statiques..."
+	$(MANAGE) collectstatic --no-input --settings=$(SETTINGS_PROD)
+
+run:
+	@echo "🚀 Démarrage du serveur..."
+	$(MANAGE) runserver --settings=$(SETTINGS_DEV)
 
 # ===========================================================
-# BUILD DOCKER IMAGES (ALL OR ONE)
-# ===========================================================
-build:
-	@for SERVICE in $(SERVICES); do \
-		echo "🚀 Building $$SERVICE service..."; \
-		docker build -t $(DOCKER_USERNAME)/$(DOCKER_NAMESPACE)-$$SERVICE:$(TAG) \
-			./services/$$SERVICE; \
-	done
-
-build-one:
-	@if [ -z "$(SERVICE)" ]; then \
-		echo "❌ Error: SERVICE not specified. Use make build-one SERVICE=gateway"; exit 1; \
-	fi
-	@echo "🚀 Building $(SERVICE)..."
-	docker build -t $(DOCKER_USERNAME)/$(DOCKER_NAMESPACE)-$(SERVICE):$(TAG) \
-		./services/$(SERVICE)
-
-
-# ===========================================================
-# PUSH TO DOCKER HUB
-# ===========================================================
-push:
-	@echo "📤 Pushing images to Docker Hub..."
-	@for SERVICE in $(SERVICES); do \
-		echo "Pushing $$SERVICE..."; \
-		docker push $(DOCKER_USERNAME)/$(DOCKER_NAMESPACE)-$$SERVICE:$(TAG); \
-	done
-
-
-# ===========================================================
-# TESTS
+# TESTS & CI (Utilisé par GitHub Actions)
 # ===========================================================
 test:
-	@echo "🧪 Running unit tests..."
-	pytest tests/unit -q
+	@echo "🧪 Exécution des tests (Environnement de Test)..."
+	# On force l'usage de SQLite en mémoire via testing.py
+	$(MANAGE) test --settings=$(SETTINGS_TEST)
 
-integration:
-	@echo "🔄 Running integration tests..."
-	$(COMPOSE) -f docker-compose.tests.yml up --build --abort-on-container-exit
-	$(COMPOSE) -f docker-compose.tests.yml down -v
+ci: install test
+	@echo "✅ Pipeline CI terminé avec succès !"
 
-
-# ===========================================================
-# DEPLOY SWARM
-# ===========================================================
-deploy:
-	@echo "🚀 Deploying stack with tag $(TAG)..."
-	@echo "IMAGE_TAG=$(TAG)" > .env
-	$(STACK)
-
+lint:
+	@echo "🔍 Analyse statique du code..."
+	# Nécessite 'pip install flake8'
+	flake8 apps src
 
 # ===========================================================
-# ROLLBACK
-# ===========================================================
-rollback:
-	@if [ -z "$(TAG)" ]; then \
-		echo "❌ Error: TAG not specified. Use make rollback TAG=<sha>"; exit 1; \
-	fi
-	@echo "🔄 Rolling back to tag $(TAG)..."
-	@echo "IMAGE_TAG=$(TAG)" > .env
-	$(STACK)
-
-
-# ===========================================================
-# LOGS
-# ===========================================================
-logs:
-	@docker service logs -f cloudtaskhub_gateway-service
-	@docker service logs -f cloudtaskhub_auth-service
-	@docker service logs -f cloudtaskhub_project-service
-	@docker service.logs -f cloudtaskhub_billing-service
-	@docker service.logs -f cloudtaskhub_notification-service
-	@docker service.logs -f cloudtaskhub_analytics-service
-
-
-# ===========================================================
-# SECURITY SCAN (TRIVY)
-# ===========================================================
-scan:
-	@echo "🔍 Scanning Docker images with Trivy..."
-	@for SERVICE in $(SERVICES); do \
-		echo "Scanning $$SERVICE ..."; \
-		trivy image $(DOCKER_USERNAME)/$(DOCKER_NAMESPACE)-$$SERVICE:$(TAG); \
-	done
-
-
-# ===========================================================
-# CLEANUP
+# NETTOYAGE
 # ===========================================================
 clean:
-	@echo "🧹 Cleaning unused Docker images..."
-	docker system prune -af
+	@echo "🧹 Nettoyage des fichiers temporaires..."
+	find . -name "*.pyc" -delete
+	find . -name "__pycache__" -delete
+	rm -rf staticfiles/
