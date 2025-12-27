@@ -19,3 +19,4 @@ python manage.py migrate --settings=src.settings.production
 # 5. DÉMARRAGE DU SERVEUR (Indispensable !)
 echo "Démarrage de Gunicorn..."
 exec gunicorn src.wsgi:application --bind 0.0.0.0:8000
+# Fix line endings force
