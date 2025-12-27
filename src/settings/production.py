@@ -27,6 +27,12 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = "None" 
 
+# CRUCIAL : Permet au popup Google de renvoyer le jeton à ton site
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
+
+CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS]
+
 # Les cookies JWT doivent aussi être sécurisés en production
 JWT_COOKIE_SECURE = True # Surcharge la valeur de base (qui peut être False en dev)
 JWT_COOKIE_SAMESITE = "None" 

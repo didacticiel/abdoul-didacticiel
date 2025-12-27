@@ -190,29 +190,17 @@ LANGUAGES = [
     ('en', 'English'),
 ]
 
-LOCALE_PATHS = [
-    BASE_DIR / 'locale',
-]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 SITE_ID = 1
 
-# Configuration allauth (gardée pour la gestion email/token si nécessaire)
-
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_LOGIN_METHODS = ['email']  # Utilisation d'une liste
-#  CORRECTION: Utiliser 'username' ou retirer la ligne si vous utilisez seulement une vue DRF personnalisée.
-#ACCOUNT_SIGNUP_FIELDS = ['username'] 
-SOCIALACCOUNT_AUTO_SIGNUP = True
-# Cherche la section 6 (INTERNATIONALISATION & SITES)
-# Remplace par cette configuration cohérente :
-
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+# --- Configuration Allauth Corrigée ---
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username' # Ou None si ton modèle User n'en a pas
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False      # Désactive le besoin d'un username
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None # Indique qu'il n'y a pas de champ username
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-
-
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'none' # Évite les erreurs d'envoi d'email au signup social
+SOCIALACCOUNT_AUTO_SIGNUP = True
 
 
 # =========================================================================

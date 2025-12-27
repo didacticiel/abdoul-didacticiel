@@ -71,11 +71,11 @@
 </main>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
     function handleCredentialResponse(response) {
-        console.log("1. Jeton reçu de Google"); // Debug
+        console.log("Token Google intercepté avec succès.");
         
+        // Envoi immédiat au backend
         fetch("{% url 'users_api:google_auth' %}", {
             method: 'POST',
             headers: {
@@ -84,50 +84,33 @@
             },
             body: JSON.stringify({ id_token: response.credential })
         })
-        .then(res => {
-            console.log("2. Réponse du backend reçue, statut:", res.status); // Debug
-            return res.json();
-        })
-        .then(data => { 
+        .then(res => res.json())
+        .then(data => {
             if (data.access) {
-                console.log("3. Connexion réussie, redirection..."); // Debug
-                window.location.replace("/"); // Utilise replace pour éviter les problèmes d'historique
+                // Succès : on redirige la fenêtre principale
+                window.location.replace(data.redirect_url || "/");
             } else {
-                console.error("Erreur backend:", data);
-                alert("Erreur d'authentification : " + (data.error || "Problème serveur"));
+                alert("Erreur: " + data.error);
             }
         })
-        .catch(err => {
-            console.error("Erreur réseau:", err);
-            alert("Impossible de joindre votre serveur. Vérifiez votre connexion.");
-        });
+        .catch(err => console.error("Erreur d'appel API:", err));
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Attendre que l'objet google soit disponible
-        const checkGoogleInterval = setInterval(() => {
-            if (typeof google !== 'undefined') {
-                clearInterval(checkGoogleInterval);
-                
-                google.accounts.id.initialize({
-                    client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}",
-                    callback: handleCredentialResponse,
-                    ux_mode: "popup",
-                    context: "signin"
-                });
-
-                google.accounts.id.renderButton(
-                    document.getElementById("googleBtnContainer"),
-                    { 
-                        theme: "filled_black", 
-                        size: "large", 
-                        width: "100%", 
-                        shape: "pill",
-                        text: "continue_with"
-                    }
-                );
-            }
-        }, 100);
+        // Initialisation avec l'option 'ux_mode: popup' explicite
+        if (typeof google !== 'undefined') {
+            google.accounts.id.initialize({
+                client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}",
+                callback: handleCredentialResponse,
+                ux_mode: "popup", // On reste en popup mais on gère le retour en JS
+                context: "signup"
+            });
+            
+            google.accounts.id.renderButton(
+                document.getElementById("googleBtnContainer"),
+                { theme: "filled_black", size: "large", width: "100%", shape: "pill" }
+            );
+        }
     });
 </script>
 {% endblock %}
