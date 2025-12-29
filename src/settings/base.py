@@ -131,13 +131,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# Paramètres modernes (plus de warnings)
 ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_AUTO_SIGNUP = True
 
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email', 'password1', 'password2']
 # =========================================================================
 # 7. DRF & JWT
 # =========================================================================
@@ -205,7 +205,7 @@ CKEDITOR_CONFIGS = {
         ],
     }
 }
-
+SILENCED_SYSTEM_CHECKS = ["ckeditor.W001"]
 # =========================================================================
 # 10. SOCIAL AUTH (GOOGLE)
 # =========================================================================
