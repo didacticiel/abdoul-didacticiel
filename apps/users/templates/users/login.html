@@ -69,6 +69,10 @@
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
+    /**
+     * LOGIQUE DE RÉPONSE GOOGLE
+     * Envoie le token reçu de Google à notre API backend
+     */
     function handleCredentialResponse(response) {
         fetch("{% url 'users_api:google_auth' %}", {
             method: 'POST',
@@ -89,8 +93,14 @@
         .catch(err => console.error("Erreur d'appel API:", err));
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        if (typeof google !== 'undefined') {
+    /**
+     * INITIALISATION DU BOUTON GOOGLE (CORRIGÉE)
+     * Cette fonction vérifie si le SDK Google est prêt avant de rendre le bouton.
+     */
+    function initGoogleAuth() {
+        const container = document.getElementById("googleBtnContainer");
+        
+        if (typeof google !== 'undefined' && google.accounts && container) {
             google.accounts.id.initialize({
                 client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}",
                 callback: handleCredentialResponse,
@@ -98,10 +108,21 @@
                 context: "signin"
             });
             google.accounts.id.renderButton(
-                document.getElementById("googleBtnContainer"),
+                container,
                 { theme: "filled_black", size: "large", width: "100%", shape: "pill" }
             );
+        } else {
+            // Si Google n'est pas encore chargé, on réessaie dans 100ms
+            setTimeout(initGoogleAuth, 100);
         }
+    }
+
+    // Lancement au chargement initial
+    document.addEventListener("DOMContentLoaded", initGoogleAuth);
+    
+    // RELANCE APRÈS NAVIGATION HTMX (Indispensable si vous utilisez HTMX)
+    document.addEventListener("htmx:afterSwap", function(event) {
+        initGoogleAuth();
     });
 </script>
 {% endblock %}

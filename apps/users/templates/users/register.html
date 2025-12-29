@@ -96,31 +96,46 @@
         .then(res => res.json())
         .then(data => {
             if (data.access) {
-                // Stockage éventuel du token pour l'API
                 localStorage.setItem('access_token', data.access);
-                // Redirection physique vers l'accueil
                 window.location.href = data.redirect_url || "/";
             } else {
-                alert("Erreur: " + (data.error || "Échec de l'authentification"));
+                alert("Erreur: " + (data.error || "Échec"));
             }
         })
         .catch(err => console.error("Erreur d'appel API:", err));
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        if (typeof google !== 'undefined') {
+    /**
+     * LOGIQUE DE RENDU DU BOUTON
+     */
+    function initGoogleAuth() {
+        const container = document.getElementById("googleBtnContainer");
+        
+        // On vérifie que le script Google est chargé (typeof google !== 'undefined')
+        if (typeof google !== 'undefined' && google.accounts && container) {
             google.accounts.id.initialize({
                 client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}",
                 callback: handleCredentialResponse,
                 ux_mode: "popup",
-                context: "signup"
+                context: "signup" // Context différent ici (Inscription)
             });
             
             google.accounts.id.renderButton(
-                document.getElementById("googleBtnContainer"),
+                container,
                 { theme: "filled_black", size: "large", width: "100%", shape: "pill" }
             );
+        } else {
+            // Si pas encore chargé, on retente très vite
+            setTimeout(initGoogleAuth, 100);
         }
+    }
+
+    // Lancer au démarrage
+    document.addEventListener("DOMContentLoaded", initGoogleAuth);
+    
+    // Lancer après chaque changement de page via HTMX
+    document.addEventListener("htmx:afterSwap", function(event) {
+        initGoogleAuth();
     });
 </script>
 {% endblock %}
