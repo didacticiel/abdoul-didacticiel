@@ -17,6 +17,18 @@
                 <h2 class="text-4xl font-black tracking-tighter text-white mb-2">Rejoindre</h2>
                 <p class="text-gray-400 text-sm">Créez votre accès à <span class="text-primary font-bold">Abdoul Didacticiel</span></p>
             </div>
+
+            {% if form.errors %}
+            <div class="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-2xl mb-6 text-xs">
+                <p class="font-bold mb-1">Veuillez corriger les erreurs suivantes :</p>
+                <ul class="list-disc pl-5">
+                    {% for field in form %}
+                        {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
             
             <div class="divider before:bg-white/10 after:bg-white/10 text-[10px] text-gray-500 uppercase font-black tracking-widest">S'inscrire avec Google</div>
             <div class="flex justify-center mb-6">
@@ -34,7 +46,7 @@
                         <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>
                         </span>
-                        <input type="email" name="email" required 
+                        <input type="email" name="email" required value="{{ form.email.value|default:'' }}"
                                class="input input-bordered w-full pl-12 bg-white/5 border-white/10 focus:border-primary focus:bg-white/10 transition-all rounded-2xl text-white" 
                                placeholder="nom@exemple.com">
                     </div>
@@ -43,13 +55,13 @@
                 <div class="grid grid-cols-1 gap-5">
                     <div class="form-control group/input">
                         <label class="label opacity-60 text-[10px] uppercase tracking-widest font-bold">Mot de passe</label>
-                        <input type="password" name="password" required 
+                        <input type="password" name="password1" required 
                                class="input input-bordered w-full bg-white/5 border-white/10 focus:border-primary rounded-2xl text-white" 
                                placeholder="••••••••">
                     </div>
                     <div class="form-control group/input">
                         <label class="label opacity-60 text-[10px] uppercase tracking-widest font-bold">Confirmation</label>
-                        <input type="password" name="password_confirm" required 
+                        <input type="password" name="password2" required 
                                class="input input-bordered w-full bg-white/5 border-white/10 focus:border-primary rounded-2xl text-white" 
                                placeholder="••••••••">
                     </div>
@@ -73,9 +85,6 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
     function handleCredentialResponse(response) {
-        console.log("Token Google intercepté avec succès.");
-        
-        // Envoi immédiat au backend
         fetch("{% url 'users_api:google_auth' %}", {
             method: 'POST',
             headers: {
@@ -87,22 +96,23 @@
         .then(res => res.json())
         .then(data => {
             if (data.access) {
-                // Succès : on redirige la fenêtre principale
-                window.location.replace(data.redirect_url || "/");
+                // Stockage éventuel du token pour l'API
+                localStorage.setItem('access_token', data.access);
+                // Redirection physique vers l'accueil
+                window.location.href = data.redirect_url || "/";
             } else {
-                alert("Erreur: " + data.error);
+                alert("Erreur: " + (data.error || "Échec de l'authentification"));
             }
         })
         .catch(err => console.error("Erreur d'appel API:", err));
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Initialisation avec l'option 'ux_mode: popup' explicite
         if (typeof google !== 'undefined') {
             google.accounts.id.initialize({
                 client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}",
                 callback: handleCredentialResponse,
-                ux_mode: "popup", // On reste en popup mais on gère le retour en JS
+                ux_mode: "popup",
                 context: "signup"
             });
             

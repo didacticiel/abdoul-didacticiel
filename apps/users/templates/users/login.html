@@ -18,6 +18,16 @@
                 <p class="text-gray-500 text-sm mt-2">Accédez à votre espace sécurisé</p>
             </div>
 
+            {% if form.errors or form.non_field_errors %}
+            <div class="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-2xl mb-6 text-xs text-center">
+                {% if form.non_field_errors %}
+                    {{ form.non_field_errors }}
+                {% else %}
+                    Email ou mot de passe incorrect.
+                {% endif %}
+            </div>
+            {% endif %}
+
             <div class="flex justify-center mb-4">
                 <div id="googleBtnContainer" class="w-full min-h-[44px]"></div>
             </div>
@@ -60,9 +70,6 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
     function handleCredentialResponse(response) {
-        console.log("Token Google intercepté avec succès.");
-        
-        // Envoi immédiat au backend
         fetch("{% url 'users_api:google_auth' %}", {
             method: 'POST',
             headers: {
@@ -74,8 +81,7 @@
         .then(res => res.json())
         .then(data => {
             if (data.access) {
-                // Succès : on redirige la fenêtre principale
-                window.location.replace(data.redirect_url || "/");
+                window.location.href = data.redirect_url || "/";
             } else {
                 alert("Erreur: " + data.error);
             }
@@ -84,15 +90,13 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Initialisation avec l'option 'ux_mode: popup' explicite
         if (typeof google !== 'undefined') {
             google.accounts.id.initialize({
                 client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}",
                 callback: handleCredentialResponse,
-                ux_mode: "popup", // On reste en popup mais on gère le retour en JS
-                context: "signup"
+                ux_mode: "popup",
+                context: "signin"
             });
-            
             google.accounts.id.renderButton(
                 document.getElementById("googleBtnContainer"),
                 { theme: "filled_black", size: "large", width: "100%", shape: "pill" }

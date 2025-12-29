@@ -59,7 +59,10 @@ SECURE_HSTS_PRELOAD = True
 # =========================================================================
 
 # Si vous utilisez un service cloud, vous devriez exiger SSL
-DATABASES['default']['OPTIONS']['sslmode'] = 'require'
+# Modifie cette ligne :
+if 'sqlite' not in DATABASES['default']['ENGINE']:
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['sslmode'] = 'require'
 
 # Utiliser Redis en Production
 CACHES = {

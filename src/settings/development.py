@@ -28,7 +28,9 @@ DATABASES['default']['HOST'] = env('DATABASE_HOST', default='localhost')
 # Désactiver SSL en mode dev (si l'option existe déjà dans base.py)
 if 'OPTIONS' not in DATABASES['default']:
     DATABASES['default']['OPTIONS'] = {}
-DATABASES['default']['OPTIONS']['sslmode'] = 'disable'
+if 'sqlite' in DATABASES['default']['ENGINE']:
+    # SQLite ne supporte AUCUNE option SSL, on vide le dictionnaire OPTIONS
+    DATABASES['default']['OPTIONS'] = {}
 
 
 # ⭐ FIX COOKIE ADMIN 

@@ -219,7 +219,7 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)  # Connexion automatique après inscription
-            return redirect('/')
+            return redirect('core:home')
     else:
         form = CustomUserCreationForm()
     return render(request, 'users/register.html', {
@@ -234,7 +234,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('/')
+            return redirect('core:home')
     else:
         form = AuthenticationForm()
     return render(request, 'users/login.html', {
@@ -245,4 +245,4 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('/')
+    return redirect('core:home')
