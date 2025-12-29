@@ -5,6 +5,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+   
+    <link rel="icon" type="image/png" href="{% static 'img/logo1-didactiel.png' %}">
+    
     <title>{% block title %}Abdoul Didacticiel{% endblock title %}</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -46,6 +50,8 @@
             <a href="{% url 'core:home' %}" class="flex items-center gap-3 group">
                 <div class="relative">
                     <div class="absolute inset-0 bg-primary blur-lg opacity-40 group-hover:opacity-80 transition-opacity"></div>
+                    <!-- LE LOGO TEXTUEL "A" RESTE ICI -->
+                    <!-- Si vous voulez remplacer ce "A" par une IMAGE dans la barre, voir le BONUS en bas -->
                     <span class="relative bg-gradient-to-br from-primary to-purple-600 text-white w-10 h-10 flex items-center justify-center rounded-xl font-black text-xl shadow-lg transform group-hover:rotate-6 transition-transform">A</span>
                 </div>
                 <span class="hidden sm:block text-xl font-black tracking-tighter uppercase italic bg-gradient-to-r from-base-content to-base-content/50 bg-clip-text text-transparent">Didacticiel</span>
