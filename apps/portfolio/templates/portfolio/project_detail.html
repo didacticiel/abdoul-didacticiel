@@ -16,9 +16,25 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
             <div class="lg:col-span-8">
-                <div class="prose prose-xl dark:prose-invert max-w-none">
+                <div class="prose prose-xl dark:prose-invert max-w-none mb-16">
                     {{ project.content|safe }}
                 </div>
+
+                {% if project.demo_url %}
+                <div class="space-y-6">
+                    <h3 class="text-3xl font-black tracking-tight">Démonstration Vidéo</h3>
+                    <div class="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/10 glass-effect">
+                        <iframe 
+                            class="absolute inset-0 w-full h-full"
+                            src="{{ project.demo_url }}" 
+                            title="YouTube video player" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             <div class="lg:col-span-4">
@@ -36,14 +52,18 @@
                         {% if project.live_url %}
                         <a href="{{ project.live_url }}" target="_blank" class="btn btn-primary rounded-xl">Voir le site live</a>
                         {% endif %}
+                        
                         {% if project.github_url %}
-                        <a href="{{ project.github_url }}" target="_blank" class="btn btn-outline rounded-xl">Code Source</a>
+                        <a href="{{ project.github_url }}" target="_blank" class="btn btn-outline rounded-xl">
+                            <i class="fab fa-github mr-2"></i> Code Source
+                        </a>
                         {% endif %}
                     </div>
 
                     <div class="pt-6 border-t border-base-300 text-sm opacity-60">
-                        <p>Client: {{ project.client|default:"Projet Personnel" }}</p>
-                        <p>Année: {{ project.year }}</p>
+                        <p><strong>Client:</strong> {{ project.client|default:"Projet Personnel" }}</p>
+                        <p><strong>Année:</strong> {{ project.year }}</p>
+                        <p><strong>Durée:</strong> {{ project.duration|default:"N/A" }}</p>
                     </div>
                 </div>
             </div>
